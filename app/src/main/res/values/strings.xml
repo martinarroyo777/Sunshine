@@ -3,4 +3,19 @@
     <string name="action_settings">Settings</string>
     <string name="refresh_button">Refresh</string>
     <string name="title_activity_detail">DetailActivity</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="key_location">location</string>
+    <string name="title_location">Location</string>
+    <string name="default_val_location">10303</string>
+    <string name="key_units">temperature_units</string>
+    <string name="title_units">Temperature Units</string>
+    <string name="default_val_units">metric</string>
+    <string-array name="readable_units">
+        <item>Metric</item>
+        <item>Imperial</item>
+    </string-array>
+    <string-array name="values_units">
+        <item>metric</item>
+        <item>imperial</item>
+    </string-array>
 </resources>

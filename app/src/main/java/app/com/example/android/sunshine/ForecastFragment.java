@@ -1,9 +1,11 @@
 package app.com.example.android.sunshine;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -29,16 +31,16 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class ForecastFragment extends Fragment {
-    // Fake data to test our adapter
-    private String[] fakeData = {"Test1", "Test2", "Test3", "Test4", "Test"};
-    private List<String> arrayList = new ArrayList<>(Arrays.asList(fakeData));
+    // Fake data to test our adapter --- Removed from code - kept for review purposes as comment
+//    private String[] fakeData = {"Test1", "Test2", "Test3", "Test4", "Test"};
+//    private List<String> arrayList = new ArrayList<>(Arrays.asList(fakeData));
+
+
     // Our adapter
     private ArrayAdapter<String> arrayAdapter;
     // Our log tag for debugging
@@ -64,12 +66,28 @@ public class ForecastFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_refresh) {
-            new FetchWeatherTask().execute("10303");
+            SharedPreferences locationPref = getActivity().getSharedPreferences(getString(R.string.key_location),0);
+            String location = locationPref.getString(getString(R.string.key_location),getString(R.string.default_val_location));
+            Log.v(LOG_TAG, location);
+            new FetchWeatherTask().execute(location.toString());
         }
         return super.onOptionsItemSelected(item);
     }
 
     // END REFRESH BUTTON
+
+    // Helper method to update the weather
+    private void updateWeather(){
+        String location = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString(getString(R.string.key_location), getString(R.string.default_val_location));
+        new FetchWeatherTask().execute(location);
+    }
+
+    // Override onStart so that it pulls our weather data at the start
+    @Override
+    public void onStart(){
+        super.onStart();
+        updateWeather();
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -79,7 +97,7 @@ public class ForecastFragment extends Fragment {
         arrayAdapter = new ArrayAdapter<String>(getContext(),
                 R.layout.list_item_forecast, // Layout where our textview resides
                 R.id.list_item_forecast_textview, // ID of our textview
-                arrayList); // Our data
+                new ArrayList<String>()); // Our data - will be populated with weather data
 
         // Referencing our list view so that we can inflate it and tell it to list to our adapter
         ListView listView = (ListView) rootView.findViewById(R.id.listview_fragment);
@@ -104,6 +122,23 @@ public class ForecastFragment extends Fragment {
         return rootView;
     }
 
+    // Helper method to prepare the weather high/lows data for presentation
+    private String formatHighLows(double high, double low) {
+        // Rounding our temp data for better readability
+
+        // Get preferences for metric or imperial and convert on the fly
+
+        if (getString(R.string.default_val_units).equals("imperial")){
+            high = high * 1.8 +32;
+            low = low * 1.8 +32;
+        }
+
+        long roundedHigh = Math.round(high);
+        long roundedLow = Math.round(low);
+
+        String highLowStr = roundedHigh + "/" + roundedLow;
+        return highLowStr;
+    }
 
     // Helper class to perform network operations on separate thread
 
@@ -123,15 +158,7 @@ public class ForecastFragment extends Fragment {
             return shortenedDateFormat.format(time);
         }
 
-        // Helper method to prepare the weather high/lows data for presentation
-        private String formatHighLows(double high, double low) {
-            // Rounding our temp data for better readability
-            long roundedHigh = Math.round(high);
-            long roundedLow = Math.round(low);
 
-            String highLowStr = roundedHigh + "/" + roundedLow;
-            return highLowStr;
-        }
 
         // Now we take the String representing our JSON data and pull the data
         // we need, putting it into an array of Strings
